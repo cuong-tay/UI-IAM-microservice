@@ -115,7 +115,7 @@ export function renderAdminView(state) {
 
         <!-- Sidebar Footer / User profile -->
         <div class="sidebar-footer">
-          <div class="user-profile-card">
+          <div class="user-profile-card is-clickable" data-action="view-self-profile" title="Xem thông tin cá nhân, tổ chức, nhóm & quyền hạn">
             ${userAvatar(avatarKey, username || displayName)}
             <div class="user-profile-info">
               <strong class="user-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</strong>
@@ -663,6 +663,7 @@ function renderDrawer(state) {
 
   const { kind, item } = state.editor;
   const titleMap = {
+    selfProfile:      "Thông Tin Cá Nhân & Phân Quyền",
     createUser:       "Thêm Người Dùng Mới",
     user:             "Cập Nhật Hồ Sơ Người Dùng",
     role:             item?.id ? "Cập Nhật Vai Trò" : "Tạo Vai Trò Mới",
@@ -680,12 +681,14 @@ function renderDrawer(state) {
     importResult:     "Kết Quả Nhập Dữ Liệu Excel"
   };
 
+  const kickerText = kind === "selfProfile" ? "TÀI KHOẢN CỦA TÔI" : "CỬA SỔ BIÊN TẬP";
+
   return `
     <div class="drawer-backdrop" data-action="close-editor"></div>
     <aside class="drawer-panel" role="dialog" aria-modal="true">
       <div class="drawer-header">
         <div class="drawer-title-box">
-          <span class="drawer-kicker">CỬA SỔ BIÊN TẬP</span>
+          <span class="drawer-kicker">${kickerText}</span>
           <h2>${titleMap[kind] || "Chi tiết"}</h2>
         </div>
         <button class="drawer-close-btn" data-action="close-editor" title="Đóng cửa sổ">
@@ -703,6 +706,7 @@ function renderDrawer(state) {
 function renderDrawerBody(state) {
   const { kind, item } = state.editor;
   switch (kind) {
+    case "selfProfile":      return selfProfileView(state.editor);
     case "createUser":       return createUserForm();
     case "user":             return userForm(item);
     case "role":             return roleForm(item);
@@ -1014,5 +1018,194 @@ function importResultView(editor) {
         `).join("")}
       </div>
     ` : ""}
+  `;
+}
+
+function selfProfileView(editor) {
+  const { tab = "info", user = {}, organization, groups = [], permissions = [] } = editor;
+
+  const username = user.username || "—";
+  const fullName = user.fullName || user.username || "—";
+  const email = user.email || "—";
+  const phone = user.phoneNumber || user.phone || "—";
+  const status = user.status || "ACTIVE";
+
+  let roleText = "Thành viên";
+  if (user.roleName) {
+    roleText = user.roleName;
+  } else if (user.roles && user.roles.length > 0) {
+    const r = user.roles[0];
+    roleText = typeof r === "string" ? r : (r.name || r.code || "Thành viên");
+  }
+
+  let tabContentHtml = "";
+
+  if (tab === "info") {
+    tabContentHtml = `
+      <div class="profile-tab-content">
+        <div class="drawer-info-grid">
+          <div class="info-row">
+            <span class="info-label">ID Tài Khoản</span>
+            <strong>#${escapeHtml(user.id || "—")}</strong>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Tên Đăng Nhập</span>
+            <strong>${escapeHtml(username)}</strong>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Họ và Tên</span>
+            <strong>${escapeHtml(fullName)}</strong>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Địa Chỉ Email</span>
+            <strong>${escapeHtml(email)}</strong>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Số Điện Thoại</span>
+            <strong>${escapeHtml(phone)}</strong>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Đơn Vị / Tổ Chức</span>
+            <strong>${escapeHtml(user.organizationName || (organization ? organization.name : "Chưa gán"))}</strong>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Vai Trò Hệ Thống</span>
+            <strong>${escapeHtml(roleText)}</strong>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Trạng Thái Tài Khoản</span>
+            <span>${statusBadge(status)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (tab === "org") {
+    if (organization) {
+      tabContentHtml = `
+        <div class="profile-tab-content">
+          <div class="profile-section-card">
+            <div class="profile-section-title">${icons.organizations} ${escapeHtml(organization.name || "Đơn vị tổ chức")}</div>
+            <div class="drawer-info-grid">
+              <div class="info-row">
+                <span class="info-label">Mã Đơn Vị</span>
+                <strong>${escapeHtml(organization.code || "—")}</strong>
+              </div>
+              <div class="info-row">
+                <span class="info-label">ID Đơn Vị</span>
+                <strong>#${escapeHtml(organization.id || "—")}</strong>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Đơn Vị Cấp Trên</span>
+                <strong>${escapeHtml(organization.parentName || (organization.parentId ? "ID: " + organization.parentId : "Cấp cao nhất (Root)"))}</strong>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Cấp Sơ Đồ (Level)</span>
+                <strong>${organization.level !== undefined ? organization.level : "—"}</strong>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Trạng Thái</span>
+                <span>${statusBadge(organization.status || "ACTIVE")}</span>
+              </div>
+            </div>
+            ${organization.description ? `
+              <div style="margin-top: 12px; font-size: 0.84rem; color: var(--muted);">
+                <strong>Mô tả:</strong> ${escapeHtml(organization.description)}
+              </div>
+            ` : ""}
+          </div>
+        </div>
+      `;
+    } else {
+      tabContentHtml = `
+        <div class="empty-state" style="padding: 24px; text-align: center;">
+          <p style="color: var(--muted);">Tài khoản hiện tại chưa thuộc Đơn vị/Tổ chức cụ thể nào hoặc chưa có thông tin tổ chức.</p>
+        </div>
+      `;
+    }
+  } else if (tab === "groups") {
+    if (groups && groups.length > 0) {
+      const itemsHtml = groups.map(g => `
+        <div class="profile-list-item">
+          <div class="profile-list-item-main">
+            <span class="profile-list-item-title">${escapeHtml(g.name || g.code || "Nhóm tài khoản")}</span>
+            <span class="profile-list-item-sub">Mã: ${escapeHtml(g.code || "—")}${g.organizationName ? " • Tổ chức: " + escapeHtml(g.organizationName) : ""}</span>
+          </div>
+          ${statusBadge(g.status || "ACTIVE")}
+        </div>
+      `).join("");
+
+      tabContentHtml = `
+        <div class="profile-tab-content">
+          <div class="profile-item-list">
+            ${itemsHtml}
+          </div>
+        </div>
+      `;
+    } else {
+      tabContentHtml = `
+        <div class="empty-state" style="padding: 24px; text-align: center;">
+          <p style="color: var(--muted);">Bạn chưa tham gia vào nhóm tài khoản nào.</p>
+        </div>
+      `;
+    }
+  } else if (tab === "perms") {
+    if (permissions && permissions.length > 0) {
+      const itemsHtml = permissions.map(p => `
+        <div class="profile-list-item">
+          <div class="profile-list-item-main">
+            <span class="profile-list-item-title">${escapeHtml(p.code || p.permissionCode || "—")}</span>
+            <span class="profile-list-item-sub">${escapeHtml(p.name || p.permissionName || p.description || "Quyền truy cập")}</span>
+          </div>
+          ${effectBadge(p.effect || "ALLOW")}
+        </div>
+      `).join("");
+
+      tabContentHtml = `
+        <div class="profile-tab-content">
+          <div class="profile-item-list" style="max-height: 420px; overflow-y: auto;">
+            ${itemsHtml}
+          </div>
+        </div>
+      `;
+    } else {
+      tabContentHtml = `
+        <div class="empty-state" style="padding: 24px; text-align: center;">
+          <p style="color: var(--muted);">Chưa ghi nhận danh sách quyền hạn hiệu lực cho tài khoản.</p>
+        </div>
+      `;
+    }
+  }
+
+  return `
+    <div class="self-profile-wrapper">
+      <div class="self-profile-header">
+        ${userAvatar(fullName || username, username)}
+        <div class="self-profile-meta">
+          <h3 class="self-profile-name">${escapeHtml(fullName)}</h3>
+          <span class="self-profile-username">@${escapeHtml(username)}</span>
+          <div class="self-profile-badges">
+            ${statusBadge(status)}
+            <span class="pill pill-muted" style="font-weight: 600;">${escapeHtml(roleText)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-modal-tabs">
+        <button class="profile-tab-btn ${tab === 'info' ? 'active' : ''}" data-action="switch-profile-tab" data-tab="info">
+          ${icons.users} Bản thân
+        </button>
+        <button class="profile-tab-btn ${tab === 'org' ? 'active' : ''}" data-action="switch-profile-tab" data-tab="org">
+          ${icons.organizations} Tổ chức
+        </button>
+        <button class="profile-tab-btn ${tab === 'groups' ? 'active' : ''}" data-action="switch-profile-tab" data-tab="groups">
+          ${icons.groups} Group (${groups.length})
+        </button>
+        <button class="profile-tab-btn ${tab === 'perms' ? 'active' : ''}" data-action="switch-profile-tab" data-tab="perms">
+          ${icons.permissions} Quyền (${permissions.length})
+        </button>
+      </div>
+
+      ${tabContentHtml}
+    </div>
   `;
 }

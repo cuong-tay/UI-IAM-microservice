@@ -75,14 +75,21 @@ async function handleClick(event) {
 
   try {
     // Navigation
-    if (action === "toggle-theme")   { toggleTheme(); return render(); }
-    if (action === "switch-auth")    { state.authMode = target.dataset.mode; setStatus(null); return render(); }
-    if (action === "logout")         return logoutUser();
-    if (action === "switch-section") { state.section = target.dataset.section; state.editor = null; setSearchQuery(""); return render(); }
-    if (action === "refresh-all")    return refreshAll();
-    if (action === "close-editor")   { state.editor = null; return render(); }
-    if (action === "dismiss-status") { setStatus(null); return render(); }
-    if (action === "clear-search")   { setSearchQuery(""); return render(); }
+    if (action === "toggle-theme")       { toggleTheme(); return render(); }
+    if (action === "switch-auth")        { state.authMode = target.dataset.mode; setStatus(null); return render(); }
+    if (action === "logout")             return logoutUser();
+    if (action === "switch-section")     { state.section = target.dataset.section; state.editor = null; setSearchQuery(""); return render(); }
+    if (action === "refresh-all")        return refreshAll();
+    if (action === "close-editor")       { state.editor = null; return render(); }
+    if (action === "dismiss-status")     { setStatus(null); return render(); }
+    if (action === "clear-search")       { setSearchQuery(""); return render(); }
+    if (action === "view-self-profile")  return openSelfProfileModal();
+    if (action === "switch-profile-tab") {
+      if (state.editor && state.editor.kind === "selfProfile") {
+        state.editor.tab = target.dataset.tab || "info";
+        return render();
+      }
+    }
 
     // Create (with permission check)
     if (action === "create-user")         { if (!can("users:create")) return; state.editor = { kind: "createUser", item: {} }; return render(); }
@@ -441,6 +448,53 @@ async function openOrgTree(id) {
     state.editor = { kind: "orgTree", item: { id }, treeData };
     render();
   } catch (error) { handleError(error); }
+}
+
+async function openSelfProfileModal() {
+  try {
+    const ctxUser = state.accessContext?.user || state.session?.user || {};
+    const userId = ctxUser.id || state.session?.userId || null;
+
+    let user = ctxUser;
+    let organization = null;
+    let groups = [];
+    let permissions = state.accessContext?.permissions || [];
+
+    if (userId) {
+      const [fetchedUser, userGroupsRes, userPermsRes] = await Promise.all([
+        safeLoad(() => api.getUser(userId)),
+        safeLoad(() => api.listUserGroups(userId)),
+        safeLoad(() => api.getUserEffectivePermissions(userId, 0, 500))
+      ]);
+
+      if (fetchedUser) user = { ...ctxUser, ...fetchedUser };
+      if (Array.isArray(userGroupsRes)) groups = userGroupsRes;
+      if (userPermsRes) {
+        const extracted = api.extractPage(userPermsRes).items;
+        if (extracted && extracted.length) permissions = extracted;
+      }
+    }
+
+    const orgId = user.organizationId || (user.organization && user.organization.id);
+    if (orgId) {
+      organization = await safeLoad(() => api.getOrganization(orgId));
+    }
+    if (!organization && user.organizationName) {
+      organization = (state.data.organizations || []).find(o => o.name === user.organizationName || String(o.id) === String(user.organizationId)) || null;
+    }
+
+    state.editor = {
+      kind: "selfProfile",
+      tab: "info",
+      user,
+      organization,
+      groups,
+      permissions
+    };
+    render();
+  } catch (error) {
+    handleError(error);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
