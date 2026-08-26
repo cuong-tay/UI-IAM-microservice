@@ -48,7 +48,39 @@ const sectionMeta = {
 export function renderAdminView(state) {
   const current = state.section;
   const meta = sectionMeta[current] || { title: current, subtitle: "", icon: "", badgeText: "" };
-  const sessionUser = state.session?.username || state.session?.email || "Admin";
+  const user = state.accessContext?.user || state.session?.user || state.session || {};
+  const username = user.username || state.session?.username || "";
+  const fullName = user.fullName || state.session?.fullName || "";
+  const email = user.email || state.session?.email || "";
+
+  // Tên hiển thị ưu tiên: Họ tên đầy đủ > Username > Email > "Người dùng"
+  const displayName = fullName || username || email || "Người dùng";
+  const avatarKey = fullName || username || email || "U";
+
+  // Role badge xác định theo vai trò thực tế
+  let roleBadge = "Người dùng";
+  const unameLower = username.toLowerCase();
+  const isSuperAdmin = Boolean(
+    state.accessContext?.isSystemAdmin ||
+    unameLower === "admin" ||
+    (user.roles && user.roles.some(r => {
+      const s = String(r.name || r.code || r).toUpperCase();
+      return s === "ADMIN" || s === "SUPER_ADMIN" || s === "ROLE_ADMIN" || s === "ROLE_SUPER_ADMIN";
+    }))
+  );
+
+  if (isSuperAdmin) {
+    roleBadge = "Super Admin";
+  } else if (user.roles && user.roles.length > 0) {
+    const firstRole = user.roles[0];
+    roleBadge = typeof firstRole === "string" ? firstRole : (firstRole.name || firstRole.code || "Thành viên");
+  } else if (user.roleName) {
+    roleBadge = user.roleName;
+  } else if (user.organizationName) {
+    roleBadge = user.organizationName;
+  } else {
+    roleBadge = "Thành viên";
+  }
 
   const totalUsers = state.data.users.length;
   const totalRoles = state.data.roles.length;
@@ -84,12 +116,12 @@ export function renderAdminView(state) {
         <!-- Sidebar Footer / User profile -->
         <div class="sidebar-footer">
           <div class="user-profile-card">
-            ${userAvatar(sessionUser, sessionUser)}
+            ${userAvatar(avatarKey, username || displayName)}
             <div class="user-profile-info">
-              <strong class="user-name" title="${escapeHtml(sessionUser)}">${escapeHtml(sessionUser)}</strong>
-              <span class="user-role-badge">Super Admin</span>
+              <strong class="user-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</strong>
+              <span class="user-role-badge">${escapeHtml(roleBadge)}</span>
             </div>
-            <button class="logout-mini-btn" data-action="logout" title="Đăng xuất hệ thống">
+            <button class="logout-mini-btn" data-action="logout" title="Đăng xuất (${escapeHtml(displayName)})">
               ${icons.logout}
             </button>
           </div>

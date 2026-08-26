@@ -27,14 +27,22 @@ export function formatDate(value) {
 
 export function userAvatar(name, username) {
   const text = (name || username || "U").trim();
-  const initials = text.slice(0, 2).toUpperCase();
+  const words = text.split(/\s+/).filter(Boolean);
+  let initials = "";
+  if (words.length >= 2) {
+    initials = (words[0][0] + words[words.length - 1][0]).toUpperCase();
+  } else {
+    initials = text.slice(0, 2).toUpperCase();
+  }
   const colors = [
     "linear-gradient(135deg, #e11d48, #be123c)",
     "linear-gradient(135deg, #f43f5e, #e11d48)",
     "linear-gradient(135deg, #fb7185, #f43f5e)",
-    "linear-gradient(135deg, #e11d48, #9f1239)"
+    "linear-gradient(135deg, #e11d48, #9f1239)",
+    "linear-gradient(135deg, #dc2626, #7c3aed)",
+    "linear-gradient(135deg, #059669, #0d9488)"
   ];
-  const charCode = text.charCodeAt(0) || 0;
+  const charCode = (text.charCodeAt(0) || 0) + (text.charCodeAt(text.length - 1) || 0);
   const bg = colors[charCode % colors.length];
 
   return `

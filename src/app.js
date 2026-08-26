@@ -118,7 +118,8 @@ async function loginUser(form) {
   if (data.mustChangePassword) {
     setStatus("warning", "Tài khoản cần đổi mật khẩu. Vui lòng đổi mật khẩu sau khi đăng nhập.");
   }
-  saveSession(data);
+  const inputName = formData.usernameOrEmail || formData.email || formData.username;
+  saveSession({ ...data, username: inputName });
   await loadAdminData("Đăng nhập thành công.");
 }
 

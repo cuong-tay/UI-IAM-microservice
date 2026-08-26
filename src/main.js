@@ -169,7 +169,27 @@ async function loginUser(form) {
     throw new Error("Tài khoản yêu cầu xác thực 2 bước (MFA). Chức năng này chưa được hỗ trợ trên giao diện.");
   }
 
-  saveSession(data);
+  const rawInput = (formData.usernameOrEmail || formData.username || formData.email || "").trim();
+  const decoded = api.decodeJwtPayload(data.accessToken);
+
+  const username = decoded.username || (rawInput.includes("@") ? rawInput.split("@")[0] : rawInput);
+  const email = decoded.email || (rawInput.includes("@") ? rawInput : "");
+  const fullName = decoded.fullName || "";
+
+  saveSession({
+    ...data,
+    username,
+    email,
+    fullName,
+    roles: decoded.roles || [],
+    user: {
+      id: decoded.userId,
+      username,
+      email,
+      fullName,
+      roles: decoded.roles || []
+    }
+  });
 
   if (data.mustChangePassword) {
     setStatus("warning", "Tài khoản cần đổi mật khẩu lần đầu. Vui lòng đổi mật khẩu.");

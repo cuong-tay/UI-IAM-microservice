@@ -353,34 +353,64 @@ export function deleteOrganization(id) {
    ═══════════════════════════════════════════════════════════════ */
 
 /**
- * Decode JWT payload (phần giữa) để lấy userId (sub) và username.
+ * Decode JWT payload (phần giữa) để lấy userId (sub/id), username, email, fullName, roles.
  * Không verify signature — chỉ đọc claims.
  * @param {string} token  JWT access token
- * @returns {{ userId: number|null, username: string|null }}
+ * @returns {{ userId: number|null, username: string|null, email: string|null, fullName: string|null, roles: Array<string> }}
  */
 export function decodeJwtPayload(token) {
   try {
     const parts = (token || "").split(".");
-    if (parts.length < 2) return { userId: null, username: null };
+    if (parts.length < 2) return { userId: null, username: null, email: null, fullName: null, roles: [] };
     // Base64url → Base64 → decode
     const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
     const jsonStr = decodeURIComponent(
       atob(base64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")
     );
     const payload = JSON.parse(jsonStr);
+
+    // Extract userId (numeric)
+    let userId = null;
+    if (payload.userId !== undefined && payload.userId !== null && !isNaN(Number(payload.userId))) {
+      userId = Number(payload.userId);
+    } else if (payload.user_id !== undefined && payload.user_id !== null && !isNaN(Number(payload.user_id))) {
+      userId = Number(payload.user_id);
+    } else if (payload.id !== undefined && payload.id !== null && !isNaN(Number(payload.id))) {
+      userId = Number(payload.id);
+    } else if (payload.sub && !isNaN(Number(payload.sub))) {
+      userId = Number(payload.sub);
+    }
+
+    // Extract username (string)
+    let username = payload.username || payload.preferred_username || payload.name || null;
+    if (!username && payload.sub && isNaN(Number(payload.sub))) {
+      username = payload.sub;
+    }
+
+    // Extract roles
+    const rawRoles = payload.roles || payload.authorities || payload.role || payload.scope || [];
+    const roles = Array.isArray(rawRoles)
+      ? rawRoles.map(r => String(r.authority || r.name || r.code || r).replace(/^ROLE_/, ""))
+      : typeof rawRoles === "string"
+        ? rawRoles.split(/\s+/).map(r => r.replace(/^ROLE_/, "")).filter(Boolean)
+        : [];
+
     return {
-      userId: payload.sub ? Number(payload.sub) : null,
-      username: payload.username || payload.preferred_username || null
+      userId: userId,
+      username: username,
+      email: payload.email || null,
+      fullName: payload.fullName || payload.full_name || payload.name || null,
+      roles: roles
     };
   } catch {
-    return { userId: null, username: null };
+    return { userId: null, username: null, email: null, fullName: null, roles: [] };
   }
 }
 
 /**
  * Nạp Access Context sau khi login:
- *  1. Decode JWT lấy userId, username
- *  2. Gọi GET /users/{userId} lấy profile
+ *  1. Decode JWT lấy userId, username, email, roles
+ *  2. Gọi GET /users/{userId} lấy profile (nếu có userId)
  *  3. Gọi GET /users/{userId}/effective-permissions lấy danh sách quyền
  *  4. Build accessContext và lưu vào store
  *
@@ -393,36 +423,73 @@ export async function loadAccessContext() {
     return null;
   }
 
-  const { userId, username } = decodeJwtPayload(token);
-  if (!userId) {
-    console.warn("Cannot decode userId from JWT");
-    clearAccessContext();
-    return null;
-  }
+  const decoded = decodeJwtPayload(token);
+  const username = decoded.username || state.session?.username || "";
+  let userId = decoded.userId || state.session?.user?.id || null;
 
-  // Detect system admin (backend bypass cho username "admin")
-  const isSystemAdmin = (username || "").toLowerCase() === "admin";
+  // Detect system admin (backend bypass cho username "admin" hoặc role ADMIN/SUPER_ADMIN)
+  const isSystemAdmin = (username || "").toLowerCase() === "admin" ||
+    (decoded.roles || []).some(r => {
+      const u = String(r).toUpperCase();
+      return u === "ADMIN" || u === "SUPER_ADMIN";
+    });
 
-  // Load user profile + effective permissions song song
-  let userProfile = { id: userId, username: username || "" };
+  let userProfile = {
+    id: userId,
+    username: username || "Người dùng",
+    fullName: decoded.fullName || state.session?.fullName || username || "",
+    email: decoded.email || state.session?.email || "",
+    roles: decoded.roles || state.session?.roles || [],
+    status: "ACTIVE"
+  };
   let permissions = [];
 
   try {
-    const [profileRes, permsRes] = await Promise.all([
-      getUser(userId),
-      getUserEffectivePermissions(userId, 0, 200)
-    ]);
+    const promises = [];
+    if (userId) {
+      promises.push(safeLoad(() => getUser(userId)));
+      promises.push(safeLoad(() => getUserEffectivePermissions(userId, 0, 200)));
+    } else {
+      // Nếu userId chưa có từ JWT, thử tìm trong listUsers nếu có quyền
+      promises.push(safeLoad(async () => {
+        const res = await listUsers(0, 100);
+        const page = extractPage(res);
+        const found = (page.items || []).find(u =>
+          (username && u.username?.toLowerCase() === username.toLowerCase()) ||
+          (decoded.email && u.email?.toLowerCase() === decoded.email.toLowerCase())
+        );
+        return found || null;
+      }));
+      promises.push(Promise.resolve(null));
+    }
+
+    const [profileRes, permsRes] = await Promise.all(promises);
 
     if (profileRes) {
+      userId = profileRes.id || userId;
       userProfile = {
         id: profileRes.id || userId,
-        username: profileRes.username || username,
-        fullName: profileRes.fullName || profileRes.username || "",
-        email: profileRes.email || "",
+        username: profileRes.username || username || "Người dùng",
+        fullName: profileRes.fullName || profileRes.username || decoded.fullName || username || "",
+        email: profileRes.email || decoded.email || "",
         status: profileRes.status || "ACTIVE",
+        roles: profileRes.roles || decoded.roles || [],
+        roleName: profileRes.roleName || (decoded.roles && decoded.roles[0]) || "",
         organizationId: profileRes.organizationId || null,
         organizationName: profileRes.organizationName || ""
       };
+
+      // Nếu có userId sau khi tìm được profileRes mà chưa load perms, thử load perms
+      if (!permsRes && userId) {
+        const pRes = await safeLoad(() => getUserEffectivePermissions(userId, 0, 200));
+        if (pRes) {
+          const page = extractPage(pRes);
+          permissions = (page.items || []).map(p => ({
+            code: (p.code || "").trim(),
+            effect: p.effect || "ALLOW"
+          }));
+        }
+      }
     }
 
     if (permsRes) {
@@ -434,13 +501,22 @@ export async function loadAccessContext() {
     }
   } catch (err) {
     console.warn("Failed to load access context:", err.message);
-    // Preserve the last known UI on a temporary network failure. If the
-    // request revoked the session, authRequest has already cleared it.
     if (!state.session?.accessToken) {
       clearAccessContext();
       return null;
     }
-    return state.accessContext;
+  }
+
+  // Update session with enriched user profile
+  if (state.session) {
+    saveSession({
+      ...state.session,
+      username: userProfile.username,
+      fullName: userProfile.fullName,
+      email: userProfile.email,
+      roles: userProfile.roles,
+      user: userProfile
+    });
   }
 
   const ctx = { user: userProfile, isSystemAdmin, permissions };
