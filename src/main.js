@@ -1,7 +1,7 @@
-﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Main Controller â€” Event handling & Business logic
+/* ═══════════════════════════════════════════════════════════════
+   Main Controller — Event handling & Business logic
    Entry point: loaded by index.html as ES Module
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════════ */
 
 import * as api from "./api-client.js";
 import { renderAdminView } from "./views/admin-view.js";
@@ -30,16 +30,16 @@ document.addEventListener("visibilitychange", () => {
 });
 window.setInterval(() => { void synchronizeAccessContext(); }, 30_000);
 
-/* â”€â”€ Bootstrap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Bootstrap ─────────────────────────────────────────────── */
 
 async function bootstrap() {
   if (!state.session?.accessToken) return;
-  // Náº¡p access context (permission + user profile) trÆ°á»›c khi load data
+  // Nạp access context (permission + user profile) trước khi load data
   await api.loadAccessContext();
   await loadAdminData();
 }
 
-/* â”€â”€ Input Handler (Live Search) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Input Handler (Live Search) ───────────────────────────── */
 
 function handleInput(event) {
   const target = event.target;
@@ -56,7 +56,7 @@ function handleInput(event) {
   }
 }
 
-/* â”€â”€ Keydown Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Keydown Handler ───────────────────────────────────────── */
 
 function handleKeydown(event) {
   if (event.key === "Escape" && state.editor) {
@@ -65,7 +65,7 @@ function handleKeydown(event) {
   }
 }
 
-/* â”€â”€ Click Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Click Handler ─────────────────────────────────────────── */
 
 async function handleClick(event) {
   const target = event.target.closest("[data-action]");
@@ -130,7 +130,7 @@ async function handleClick(event) {
   }
 }
 
-/* â”€â”€ Submit Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Submit Handler ────────────────────────────────────────── */
 
 async function handleSubmit(event) {
   event.preventDefault();
@@ -155,9 +155,9 @@ async function handleSubmit(event) {
   }
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════════
    AUTH ACTIONS
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════════ */
 
 async function loginUser(form) {
   clearSession();
@@ -166,19 +166,19 @@ async function loginUser(form) {
   const data = await api.login(formData);
 
   if (data.mfaRequired) {
-    throw new Error("TÃ i khoáº£n yÃªu cáº§u xÃ¡c thá»±c 2 bÆ°á»›c (MFA). Chá»©c nÄƒng nÃ y chÆ°a Ä‘Æ°á»£c há»— trá»£ trÃªn giao diá»‡n.");
+    throw new Error("Tài khoản yêu cầu xác thực 2 bước (MFA). Chức năng này chưa được hỗ trợ trên giao diện.");
   }
 
   saveSession(data);
 
   if (data.mustChangePassword) {
-    setStatus("warning", "TÃ i khoáº£n cáº§n Ä‘á»•i máº­t kháº©u láº§n Ä‘áº§u. Vui lÃ²ng Ä‘á»•i máº­t kháº©u.");
+    setStatus("warning", "Tài khoản cần đổi mật khẩu lần đầu. Vui lòng đổi mật khẩu.");
   }
 
-  // Náº¡p access context: decode JWT â†’ load permissions + user profile
+  // Nạp access context: decode JWT → load permissions + user profile
   await api.loadAccessContext();
 
-  await loadAdminData("ÄÄƒng nháº­p thÃ nh cÃ´ng.");
+  await loadAdminData("Đăng nhập thành công.");
 }
 
 async function logoutUser() {
@@ -189,17 +189,17 @@ async function logoutUser() {
   } catch { /* Ignore logout API errors */ }
   clearSession();
   state.editor = null;
-  setStatus("success", "ÄÃ£ Ä‘Äƒng xuáº¥t.");
+  setStatus("success", "Đã đăng xuất.");
   render();
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   DATA LOADING â€” Chá»‰ load module cÃ³ quyá»n
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* ═══════════════════════════════════════════════════════════════
+   DATA LOADING — Chỉ load module có quyền
+   ═══════════════════════════════════════════════════════════════ */
 
 async function loadAdminData(message) {
   try {
-    // Chá»‰ gá»i API cho module mÃ  user cÃ³ quyá»n xem (theo tÃ i liá»‡u má»¥c 9 bÆ°á»›c 6)
+    // Chỉ gọi API cho module mà user có quyền xem (theo tài liệu mục 9 bước 6)
     const loaders = [];
     const keys = [];
 
@@ -214,7 +214,7 @@ async function loadAdminData(message) {
     const newData = { ...state.data };
     const newPagination = { ...state.pagination };
 
-    // Do not retain records for modules whose permission was just revoked.
+    // Không giữ lại dữ liệu của các module bị thu hồi quyền
     ["users", "roles", "permissions", "groups", "organizations"].forEach(key => {
       if (!keys.includes(key)) {
         newData[key] = [];
@@ -231,22 +231,22 @@ async function loadAdminData(message) {
     updateData(newData);
     updatePagination(newPagination);
 
-    // Náº¿u section hiá»‡n táº¡i khÃ´ng cÃ³ quyá»n xem, chuyá»ƒn vá» section Ä‘áº§u tiÃªn cÃ³ quyá»n
+    // Nếu section hiện tại không có quyền xem, chuyển về section đầu tiên có quyền
     ensureValidSection();
 
     setStatus(message ? "success" : null, message || "");
   } catch (error) {
     if (error.status === 401) {
       clearSession();
-      setStatus("error", "PhiÃªn Ä‘Äƒng nháº­p háº¿t háº¡n. Vui lÃ²ng Ä‘Äƒng nháº­p láº¡i.");
+      setStatus("error", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
     } else {
-      setStatus("error", error.message || "KhÃ´ng thá»ƒ táº£i dá»¯ liá»‡u.");
+      setStatus("error", error.message || "Không thể tải dữ liệu.");
     }
   }
   render();
 }
 
-/** Refresh toÃ n bá»™: reload access context + data */
+/** Refresh toàn bộ: reload access context + data */
 async function refreshAll() {
   await api.loadAccessContext();
   if (!state.session?.accessToken) {
@@ -254,10 +254,10 @@ async function refreshAll() {
     render();
     return;
   }
-  await loadAdminData("ÄÃ£ lÃ m má»›i dá»¯ liá»‡u vÃ  quyá»n truy cáº­p.");
+  await loadAdminData("Đã làm mới dữ liệu và quyền truy cập.");
 }
 
-/** Äáº£m báº£o section hiá»‡n táº¡i lÃ  section mÃ  user cÃ³ quyá»n xem */
+/** Đảm bảo section hiện tại là section mà user có quyền xem */
 async function synchronizeAccessContext() {
   if (!state.session?.accessToken || accessSyncPromise) return accessSyncPromise;
 
@@ -327,9 +327,9 @@ async function changePage(delta) {
   }
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════════
    EDITOR OPENERS
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════════ */
 
 async function openEditor(action, id) {
   try {
@@ -423,16 +423,16 @@ async function openOrgTree(id) {
   } catch (error) { handleError(error); }
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════════
    CRUD ACTIONS
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════════ */
 
 async function saveNewUser(form) {
   const payload = readForm(form);
   if (payload.organizationId) payload.organizationId = Number(payload.organizationId);
   await api.createUser(payload);
   state.editor = null;
-  await loadAdminData("ÄÃ£ thÃªm ngÆ°á»i dÃ¹ng má»›i.");
+  await loadAdminData("Đã thêm người dùng mới.");
 }
 
 async function saveUser(form) {
@@ -442,7 +442,7 @@ async function saveUser(form) {
   if (!payload.password) delete payload.password;
   await api.updateUser(id, payload);
   state.editor = null;
-  await loadAdminData("ÄÃ£ cáº­p nháº­t ngÆ°á»i dÃ¹ng.");
+  await loadAdminData("Đã cập nhật người dùng.");
 }
 
 async function saveRole(form) {
@@ -450,7 +450,7 @@ async function saveRole(form) {
   const id = form.dataset.id;
   id ? await api.updateRole(id, payload) : await api.createRole(payload);
   state.editor = null;
-  await loadAdminData(id ? "ÄÃ£ cáº­p nháº­t vai trÃ²." : "ÄÃ£ táº¡o vai trÃ² má»›i.");
+  await loadAdminData(id ? "Đã cập nhật vai trò." : "Đã tạo vai trò mới.");
 }
 
 async function saveGroup(form) {
@@ -459,7 +459,7 @@ async function saveGroup(form) {
   const id = form.dataset.id;
   id ? await api.updateGroup(id, payload) : await api.createGroup(payload);
   state.editor = null;
-  await loadAdminData(id ? "ÄÃ£ cáº­p nháº­t nhÃ³m." : "ÄÃ£ táº¡o nhÃ³m má»›i.");
+  await loadAdminData(id ? "Đã cập nhật nhóm." : "Đã tạo nhóm mới.");
 }
 
 async function saveOrganization(form) {
@@ -469,7 +469,7 @@ async function saveOrganization(form) {
   const id = form.dataset.id;
   id ? await api.updateOrganization(id, payload) : await api.createOrganization(payload);
   state.editor = null;
-  await loadAdminData(id ? "ÄÃ£ cáº­p nháº­t tá»• chá»©c." : "ÄÃ£ táº¡o tá»• chá»©c má»›i.");
+  await loadAdminData(id ? "Đã cập nhật đơn vị tổ chức." : "Đã tạo đơn vị tổ chức mới.");
 }
 
 async function saveRolePermissions(form) {
@@ -482,7 +482,7 @@ async function saveRolePermissions(form) {
   );
   await api.loadAccessContext();
   state.editor = null;
-  await loadAdminData("ÄÃ£ cáº­p nháº­t quyá»n cho vai trÃ².");
+  await loadAdminData("Đã cập nhật quyền cho vai trò.");
 }
 
 async function saveGroupUsers(form) {
@@ -495,7 +495,7 @@ async function saveGroupUsers(form) {
   );
   await api.loadAccessContext();
   state.editor = null;
-  await loadAdminData("ÄÃ£ cáº­p nháº­t thÃ nh viÃªn nhÃ³m.");
+  await loadAdminData("Đã cập nhật thành viên nhóm.");
 }
 
 async function saveGroupRoles(form) {
@@ -508,7 +508,7 @@ async function saveGroupRoles(form) {
   );
   await api.loadAccessContext();
   state.editor = null;
-  await loadAdminData("ÄÃ£ cáº­p nháº­t vai trÃ² cho nhÃ³m.");
+  await loadAdminData("Đã cập nhật vai trò cho nhóm.");
 }
 
 async function synchronizeAssignments(selectedIds, currentIds, removeAssignment, addAssignments) {
@@ -517,8 +517,7 @@ async function synchronizeAssignments(selectedIds, currentIds, removeAssignment,
   const removedIds = [...current].filter(id => !selected.has(id));
   const addedIds = [...selected].filter(id => !current.has(id));
 
-  // Apply removals first and await each operation so the final membership is
-  // deterministic even when the browser or network is under load.
+  // Áp dụng gỡ trước, gán sau theo tuần tự
   for (const id of removedIds) {
     await removeAssignment(id);
   }
@@ -528,7 +527,7 @@ async function synchronizeAssignments(selectedIds, currentIds, removeAssignment,
 }
 
 async function destroyItem(action, id) {
-  // Permission check cho tá»«ng loáº¡i delete
+  // Permission check cho từng loại delete
   const permMap = {
     "delete-user": "users:delete",
     "delete-role": "roles:delete",
@@ -538,11 +537,11 @@ async function destroyItem(action, id) {
   if (permMap[action] && !can(permMap[action])) return;
 
   const labels = {
-    "delete-user": "ngÆ°á»i dÃ¹ng", "delete-role": "vai trÃ²",
-    "delete-group": "nhÃ³m", "delete-organization": "Ä‘Æ¡n vá»‹ tá»• chá»©c"
+    "delete-user": "người dùng", "delete-role": "vai trò",
+    "delete-group": "nhóm", "delete-organization": "đơn vị tổ chức"
   };
-  const label = labels[action] || "báº£n ghi";
-  if (!confirm(`XÃ¡c nháº­n xÃ³a ${label} nÃ y?`)) return;
+  const label = labels[action] || "bản ghi";
+  if (!confirm(`Xác nhận xóa ${label} này?`)) return;
 
   if (action === "delete-user")         await api.deleteUser(id);
   if (action === "delete-role")         await api.deleteRole(id);
@@ -550,37 +549,37 @@ async function destroyItem(action, id) {
   if (action === "delete-organization") await api.deleteOrganization(id);
 
   state.editor = null;
-  await loadAdminData(`ÄÃ£ xÃ³a ${label}.`);
+  await loadAdminData(`Đã xóa ${label}.`);
 }
 
-/* â”€â”€ User Lock / Unlock â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── User Lock / Unlock ────────────────────────────────────── */
 
 async function lockUserAction(id) {
-  const reason = prompt("LÃ½ do khÃ³a tÃ i khoáº£n:", "Vi pháº¡m chÃ­nh sÃ¡ch báº£o máº­t");
+  const reason = prompt("Lý do khóa tài khoản:", "Vi phạm chính sách bảo mật");
   if (reason === null) return;
   await api.lockUser(id, reason);
-  await loadAdminData("ÄÃ£ khÃ³a tÃ i khoáº£n.");
+  await loadAdminData("Đã khóa tài khoản.");
 }
 
 async function unlockUserAction(id) {
-  if (!confirm("XÃ¡c nháº­n má»Ÿ khÃ³a tÃ i khoáº£n nÃ y?")) return;
+  if (!confirm("Xác nhận mở khóa tài khoản này?")) return;
   await api.unlockUser(id);
-  await loadAdminData("ÄÃ£ má»Ÿ khÃ³a tÃ i khoáº£n.");
+  await loadAdminData("Đã mở khóa tài khoản.");
 }
 
-/* â”€â”€ Permission Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Permission Toggle ─────────────────────────────────────── */
 
 async function togglePermEffect(id) {
   await api.togglePermissionEffect(id);
   await api.loadAccessContext();
-  await loadAdminData("ÄÃ£ chuyá»ƒn Ä‘á»•i hiá»‡u lá»±c quyá»n.");
+  await loadAdminData("Đã chuyển đổi hiệu lực quyền.");
 }
 
-/* â”€â”€ Import / Export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Import / Export ───────────────────────────────────────── */
 
 async function exportUsersAction() {
   try {
-    setStatus("success", "Äang táº¡o file Excel...");
+    setStatus("success", "Đang tạo file Excel...");
     render();
     const { blob, filename } = await api.exportUsers();
     const url = URL.createObjectURL(blob);
@@ -589,7 +588,7 @@ async function exportUsersAction() {
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
-    setStatus("success", `ÄÃ£ xuáº¥t file thÃ nh cÃ´ng: ${filename}`);
+    setStatus("success", `Đã xuất file thành công: ${filename}`);
     render();
   } catch (error) {
     handleError(error);
@@ -604,11 +603,11 @@ function triggerImportDialog() {
     const file = fileInput.files?.[0];
     if (!file) return;
     try {
-      setStatus("success", "Äang táº£i vÃ  xá»­ lÃ½ file Excel...");
+      setStatus("success", "Đang tải và xử lý file Excel...");
       render();
       const result = await api.importUsers(file);
       state.editor = { kind: "importResult", item: {}, result };
-      setStatus("success", `Import hoÃ n táº¥t: ${result.successCount || 0} thÃ nh cÃ´ng, ${result.failedCount || 0} lá»—i.`);
+      setStatus("success", `Import hoàn tất: ${result.successCount || 0} thành công, ${result.failedCount || 0} lỗi.`);
       await loadAdminData();
     } catch (error) {
       handleError(error);
@@ -617,9 +616,9 @@ function triggerImportDialog() {
   fileInput.click();
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════════════════════════
    HELPERS
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════════════════════════════ */
 
 function render() {
   app.innerHTML = hasAccess() ? renderAdminView(state) : renderAuthView(state);
@@ -650,26 +649,26 @@ function readForm(form) {
 }
 
 /**
- * Xá»­ lÃ½ lá»—i: phÃ¢n biá»‡t 401, 403 vÃ  lá»—i khÃ¡c.
- * - 401: session háº¿t háº¡n â†’ xÃ³a session, vá» login
- * - 403: khÃ´ng cÃ³ quyá»n â†’ thÃ´ng bÃ¡o + refresh access context
- * - KhÃ¡c: hiá»ƒn thá»‹ message lá»—i
+ * Xử lý lỗi: phân biệt 401, 403 và lỗi khác.
+ * - 401: session hết hạn → xóa session, về login
+ * - 403: không có quyền → thông báo + refresh access context
+ * - Khác: hiển thị message lỗi
  */
 async function handleError(error) {
   if (error.status === 401) {
     clearSession();
-    setStatus("error", "PhiÃªn Ä‘Äƒng nháº­p háº¿t háº¡n. Vui lÃ²ng Ä‘Äƒng nháº­p láº¡i.");
+    setStatus("error", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
     render();
   } else if (error.status === 403) {
-    setStatus("warning", "Báº¡n khÃ´ng cÃ³ quyá»n thá»±c hiá»‡n thao tÃ¡c nÃ y. Äang cáº­p nháº­t quyá»n...");
+    setStatus("warning", "Bạn không có quyền thực hiện thao tác này. Đang cập nhật quyền...");
     render();
-    // Refresh access context khi gáº·p 403 (quyá»n cÃ³ thá»ƒ Ä‘Ã£ thay Ä‘á»•i)
+    // Refresh access context khi gặp 403 (quyền có thể đã thay đổi)
     await api.loadAccessContext();
     ensureValidSection();
-    setStatus("warning", "Báº¡n khÃ´ng cÃ³ quyá»n thá»±c hiá»‡n thao tÃ¡c nÃ y.");
+    setStatus("warning", "Bạn không có quyền thực hiện thao tác này.");
     render();
   } else {
-    setStatus("error", error.message || "CÃ³ lá»—i xáº£y ra.");
+    setStatus("error", error.message || "Có lỗi xảy ra.");
     render();
   }
 }
