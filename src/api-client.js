@@ -3,10 +3,11 @@
    Tất cả endpoints theo tài liệu API_DOCUMENTATION.md
    ═══════════════════════════════════════════════════════════════ */
 
-import { clearSession, saveSession, state } from "./store.js";
+import { clearSession, saveSession, setAccessContext, clearAccessContext, state } from "./store.js";
 
 const BASE_URL = "http://localhost:8084";
 const API_PREFIX = "/api/core/auth-service/api/v1";
+let refreshPromise = null;
 
 /* ───────────────────────────────────────────────────────────────
    MODULE 1: AUTHENTICATION & SECURITY (/api/auth)
@@ -348,6 +349,106 @@ export function deleteOrganization(id) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   ACCESS CONTEXT — JWT Decode & Permission Loading
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Decode JWT payload (phần giữa) để lấy userId (sub) và username.
+ * Không verify signature — chỉ đọc claims.
+ * @param {string} token  JWT access token
+ * @returns {{ userId: number|null, username: string|null }}
+ */
+export function decodeJwtPayload(token) {
+  try {
+    const parts = (token || "").split(".");
+    if (parts.length < 2) return { userId: null, username: null };
+    // Base64url → Base64 → decode
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const jsonStr = decodeURIComponent(
+      atob(base64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")
+    );
+    const payload = JSON.parse(jsonStr);
+    return {
+      userId: payload.sub ? Number(payload.sub) : null,
+      username: payload.username || payload.preferred_username || null
+    };
+  } catch {
+    return { userId: null, username: null };
+  }
+}
+
+/**
+ * Nạp Access Context sau khi login:
+ *  1. Decode JWT lấy userId, username
+ *  2. Gọi GET /users/{userId} lấy profile
+ *  3. Gọi GET /users/{userId}/effective-permissions lấy danh sách quyền
+ *  4. Build accessContext và lưu vào store
+ *
+ * @returns {Promise<{user: object, isSystemAdmin: boolean, permissions: Array}>}
+ */
+export async function loadAccessContext() {
+  const token = state.session?.accessToken;
+  if (!token) {
+    clearAccessContext();
+    return null;
+  }
+
+  const { userId, username } = decodeJwtPayload(token);
+  if (!userId) {
+    console.warn("Cannot decode userId from JWT");
+    clearAccessContext();
+    return null;
+  }
+
+  // Detect system admin (backend bypass cho username "admin")
+  const isSystemAdmin = (username || "").toLowerCase() === "admin";
+
+  // Load user profile + effective permissions song song
+  let userProfile = { id: userId, username: username || "" };
+  let permissions = [];
+
+  try {
+    const [profileRes, permsRes] = await Promise.all([
+      getUser(userId),
+      getUserEffectivePermissions(userId, 0, 200)
+    ]);
+
+    if (profileRes) {
+      userProfile = {
+        id: profileRes.id || userId,
+        username: profileRes.username || username,
+        fullName: profileRes.fullName || profileRes.username || "",
+        email: profileRes.email || "",
+        status: profileRes.status || "ACTIVE",
+        organizationId: profileRes.organizationId || null,
+        organizationName: profileRes.organizationName || ""
+      };
+    }
+
+    if (permsRes) {
+      const page = extractPage(permsRes);
+      permissions = (page.items || []).map(p => ({
+        code: (p.code || "").trim(),
+        effect: p.effect || "ALLOW"
+      }));
+    }
+  } catch (err) {
+    console.warn("Failed to load access context:", err.message);
+    // Preserve the last known UI on a temporary network failure. If the
+    // request revoked the session, authRequest has already cleared it.
+    if (!state.session?.accessToken) {
+      clearAccessContext();
+      return null;
+    }
+    return state.accessContext;
+  }
+
+  const ctx = { user: userProfile, isSystemAdmin, permissions };
+  setAccessContext(ctx);
+  return ctx;
+}
+
+/* ═══════════════════════════════════════════════════════════════
    UTILITIES — Extractors & Helpers
    ═══════════════════════════════════════════════════════════════ */
 
@@ -386,7 +487,17 @@ async function authRequest(path, options = {}, retry = true) {
     });
   } catch (error) {
     if (retry && error.status === 401 && state.session?.refreshToken) {
-      await refreshSession();
+      try {
+        await refreshSession();
+      } catch (refreshError) {
+        // The refresh token is revoked when an administrator locks this user.
+        // Never leave the old protected UI visible in that situation.
+        clearSession();
+        const sessionError = new Error("Phiên đăng nhập đã hết hạn hoặc tài khoản đã bị khóa.");
+        sessionError.status = 401;
+        sessionError.cause = refreshError;
+        throw sessionError;
+      }
       return authRequest(path, options, false);
     }
     if (error.status === 401) {
@@ -444,15 +555,28 @@ async function authDownload(path) {
  * refreshSession: Tự động refresh access token khi hết hạn.
  */
 async function refreshSession() {
-  const data = await request("/api/auth/refresh-token", {
-    method: "POST",
-    body: { refreshToken: state.session.refreshToken }
-  });
-  saveSession({
-    ...state.session,
-    accessToken: data.accessToken,
-    refreshToken: data.refreshToken
-  });
+  // Several parallel requests may receive 401 together. Refresh tokens are
+  // rotated by the backend, so all callers must await the same refresh request.
+  if (!refreshPromise) {
+    const refreshTokenValue = state.session?.refreshToken;
+    refreshPromise = request("/api/auth/refresh-token", {
+      method: "POST",
+      body: { refreshToken: refreshTokenValue }
+    }).then(data => {
+      if (!state.session) {
+        throw new Error("Phiên đăng nhập không còn tồn tại.");
+      }
+      saveSession({
+        ...state.session,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken
+      });
+      return data;
+    }).finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
 }
 
 /**
