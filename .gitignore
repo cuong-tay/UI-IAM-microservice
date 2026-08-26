@@ -1,0 +1,17 @@
+# OS & IDE Files
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+*~
+
+# IDE & Editor Configs
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Temporary & Agent Logs
+.agents/
+.codex/
+*.log
