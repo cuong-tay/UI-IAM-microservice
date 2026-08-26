@@ -213,10 +213,10 @@ function renderStatsCards(section, state) {
     const lockedCount = users.filter(u => u.status === "LOCKED").length;
     return `
       <div class="stats-overview-grid">
-        ${statCard("Tổng người dùng", users.length, "👤", "Tài khoản trong hệ thống")}
-        ${statCard("Đang hoạt động", activeCount, "✅", "Sẵn sàng truy cập", "stat-success")}
-        ${statCard("Tài khoản bị khóa", lockedCount, "🔒", "Cần kiểm tra lý do", lockedCount > 0 ? "stat-danger" : "")}
-        ${statCard("Đơn vị trực thuộc", orgs.length, "🏢", "Các chi nhánh & phòng ban")}
+        ${statCard("Tổng người dùng", users.length, icons.users, "Tài khoản trong hệ thống")}
+        ${statCard("Đang hoạt động", activeCount, icons.checkCircle, "Sẵn sàng truy cập", "stat-success")}
+        ${statCard("Tài khoản bị khóa", lockedCount, icons.lock, "Cần kiểm tra lý do", lockedCount > 0 ? "stat-danger" : "")}
+        ${statCard("Đơn vị trực thuộc", orgs.length, icons.building, "Các chi nhánh & phòng ban")}
       </div>
     `;
   }
@@ -225,10 +225,10 @@ function renderStatsCards(section, state) {
     const sysRoles = roles.filter(r => r.system).length;
     return `
       <div class="stats-overview-grid">
-        ${statCard("Tổng số vai trò", roles.length, "🛡", "Vai trò bảo mật")}
-        ${statCard("Vai trò hệ thống", sysRoles, "⚙️", "Cố định bởi nền tảng")}
-        ${statCard("Vai trò tùy chỉnh", roles.length - sysRoles, "✨", "Do quản trị viên tạo")}
-        ${statCard("Nhóm đang phân quyền", groups.length, "👥", "Nhóm được gán vai trò")}
+        ${statCard("Tổng số vai trò", roles.length, icons.roles, "Vai trò bảo mật")}
+        ${statCard("Vai trò hệ thống", sysRoles, icons.gear, "Cố định bởi nền tảng")}
+        ${statCard("Vai trò tùy chỉnh", roles.length - sysRoles, icons.star, "Do quản trị viên tạo")}
+        ${statCard("Nhóm đang phân quyền", groups.length, icons.groups, "Nhóm được gán vai trò")}
       </div>
     `;
   }
@@ -239,10 +239,10 @@ function renderStatsCards(section, state) {
     const denyCount = perms.filter(p => p.effect === "DENY").length;
     return `
       <div class="stats-overview-grid">
-        ${statCard("Tổng quyền API", perms.length, "🔑", "Định nghĩa trong hệ thống")}
-        ${statCard("Quyền hiệu lực (ALLOW)", allowCount, "🟢", "Được phép thực thi", "stat-success")}
-        ${statCard("Quyền bị cấm (DENY)", denyCount, "🔴", "Chặn truy cập trực tiếp", denyCount > 0 ? "stat-danger" : "")}
-        ${statCard("Tài nguyên (Resources)", new Set(perms.map(p => p.resource)).size, "📂", "Mô đun bảo vệ")}
+        ${statCard("Tổng quyền API", perms.length, icons.key, "Định nghĩa trong hệ thống")}
+        ${statCard("Quyền hiệu lực (ALLOW)", allowCount, icons.checkCircle, "Được phép thực thi", "stat-success")}
+        ${statCard("Quyền bị cấm (DENY)", denyCount, icons.xCircle, "Chặn truy cập trực tiếp", denyCount > 0 ? "stat-danger" : "")}
+        ${statCard("Tài nguyên (Resources)", new Set(perms.map(p => p.resource)).size, icons.folder, "Mô đun bảo vệ")}
       </div>
     `;
   }
@@ -250,10 +250,10 @@ function renderStatsCards(section, state) {
   if (section === "groups") {
     return `
       <div class="stats-overview-grid">
-        ${statCard("Tổng số nhóm", groups.length, "👥", "Nhóm người dùng")}
-        ${statCard("Đơn vị liên kết", orgs.length, "🏢", "Cơ cấu tổ chức")}
-        ${statCard("Người dùng đã phân bổ", users.length, "👤", "Thành viên hệ thống")}
-        ${statCard("Vai trò sẵn sàng", roles.length, "🛡", "Có thể gán cho nhóm")}
+        ${statCard("Tổng số nhóm", groups.length, icons.groups, "Nhóm người dùng")}
+        ${statCard("Đơn vị liên kết", orgs.length, icons.building, "Cơ cấu tổ chức")}
+        ${statCard("Người dùng đã phân bổ", users.length, icons.users, "Thành viên hệ thống")}
+        ${statCard("Vai trò sẵn sàng", roles.length, icons.roles, "Có thể gán cho nhóm")}
       </div>
     `;
   }
@@ -261,10 +261,10 @@ function renderStatsCards(section, state) {
   if (section === "organizations") {
     return `
       <div class="stats-overview-grid">
-        ${statCard("Tổng đơn vị", orgs.length, "🏢", "Chi nhánh & phòng ban")}
-        ${statCard("Nhóm trực thuộc", groups.length, "👥", "Tổ chức chuyên môn")}
-        ${statCard("Nhân sự toàn hệ thống", users.length, "👤", "Tổng số tài khoản")}
-        ${statCard("Cấp quản trị cao nhất", "Trụ sở chính", "🏛", "Root Organization")}
+        ${statCard("Tổng đơn vị", orgs.length, icons.building, "Chi nhánh & phòng ban")}
+        ${statCard("Nhóm trực thuộc", groups.length, icons.groups, "Tổ chức chuyên môn")}
+        ${statCard("Nhân sự toàn hệ thống", users.length, icons.users, "Tổng số tài khoản")}
+        ${statCard("Cấp quản trị cao nhất", "Trụ sở chính", icons.landmark, "Root Organization")}
       </div>
     `;
   }
@@ -277,7 +277,7 @@ function statCard(title, value, iconEmoji, desc, extraClass = "") {
     <div class="stat-card ${extraClass}">
       <div class="stat-card-top">
         <span class="stat-card-title">${title}</span>
-        <span class="stat-card-emoji">${iconEmoji}</span>
+        <span class="stat-card-icon">${iconEmoji}</span>
       </div>
       <div class="stat-card-value">${value}</div>
       <div class="stat-card-desc">${desc}</div>
@@ -334,7 +334,7 @@ function renderTable(section, state) {
   if (!rows.length) {
     return `
       <div class="empty-state-card">
-        <div class="empty-state-icon">🔍</div>
+        <div class="empty-state-icon">${icons.search}</div>
         <h3>Không tìm thấy dữ liệu</h3>
         <p class="muted">Không có kết quả nào phù hợp với bộ lọc hiện tại. Thử xóa từ khóa tìm kiếm hoặc bấm <strong>Làm mới</strong>.</p>
         ${state.searchQuery ? `<button class="btn-secondary" data-action="clear-search">Xóa tìm kiếm</button>` : ""}
@@ -400,7 +400,7 @@ function renderUserRow(item) {
       <td>
         <div class="status-org-cell">
           ${statusBadge(item.status)}
-          ${item.organizationName ? `<span class="org-cell-tag" title="Đơn vị: ${escapeHtml(item.organizationName)}">🏢 ${escapeHtml(item.organizationName)}</span>` : ""}
+          ${item.organizationName ? `<span class="org-cell-tag" title="Đơn vị: ${escapeHtml(item.organizationName)}">${icons.building} ${escapeHtml(item.organizationName)}</span>` : ""}
         </div>
       </td>
       <td class="td-actions">
@@ -485,8 +485,8 @@ function renderPermissionRow(item) {
       </td>
       <td>
         <div class="resource-action-cell">
-          <span class="resource-badge">📂 ${escapeHtml(item.resource || "—")}</span>
-          <span class="action-badge">⚡ ${escapeHtml(item.action || "")}</span>
+          <span class="resource-badge">${icons.folder} ${escapeHtml(item.resource || "—")}</span>
+          <span class="action-badge">${icons.zap} ${escapeHtml(item.action || "")}</span>
         </div>
       </td>
       <td>
@@ -498,7 +498,7 @@ function renderPermissionRow(item) {
             ${icons.edit} <span>Chi tiết</span>
           </button>
           <button class="action-btn ${item.effect === 'ALLOW' ? 'btn-toggle-deny' : 'btn-toggle-allow'}" data-action="toggle-permission-effect" data-id="${item.id}" title="Chuyển đổi ALLOW / DENY">
-            ⚡ <span>${item.effect === "ALLOW" ? "Chuyển DENY" : "Chuyển ALLOW"}</span>
+            ${icons.zap} <span>${item.effect === "ALLOW" ? "Chuyển DENY" : "Chuyển ALLOW"}</span>
           </button>
           <button class="action-btn" data-action="permission-roles" data-id="${item.id}" title="Xem vai trò có quyền này">
             ${icons.roles} <span>Vai trò</span>
@@ -526,7 +526,7 @@ function renderGroupRow(item) {
       <td>
         <div class="status-org-cell">
           ${statusBadge(item.status)}
-          ${item.organizationName ? `<span class="org-cell-tag">🏢 ${escapeHtml(item.organizationName)}</span>` : ""}
+          ${item.organizationName ? `<span class="org-cell-tag">${icons.building} ${escapeHtml(item.organizationName)}</span>` : ""}
         </div>
       </td>
       <td class="td-actions">
@@ -559,7 +559,7 @@ function renderOrgRow(item) {
     <tr class="table-data-row">
       <td>
         <div class="org-name-cell" style="padding-left: ${indentPx}px">
-          <span class="org-level-indicator">${level > 1 ? '↳ ' : '🏛 '}</span>
+          <span class="org-level-indicator">${level > 1 ? icons.cornerDownRight : icons.landmark}</span>
           <strong class="org-name">${escapeHtml(item.name || "—")}</strong>
         </div>
       </td>
@@ -578,7 +578,7 @@ function renderOrgRow(item) {
             ${icons.edit} <span>Sửa</span>
           </button>
           <button class="action-btn" data-action="org-tree" data-id="${item.id}" title="Xem sơ đồ cây tổ chức">
-            🌳 <span>Cây con</span>
+            ${icons.tree} <span>Cây con</span>
           </button>
           <button class="action-btn btn-delete" data-action="delete-organization" data-id="${item.id}" title="Xóa đơn vị">
             ${icons.trash}

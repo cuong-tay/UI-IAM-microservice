@@ -75,17 +75,20 @@ export function renderAuthView(state) {
           <!-- Sample credentials box -->
           <div class="sample-credentials-card">
             <div class="credentials-header">
-              <span class="credentials-badge">💡 THÔNG TIN MẪU</span>
+              <span class="credentials-badge">${icons.info} Tài khoản Admin đăng nhập</span>
             </div>
             <div class="credentials-body">
               <div class="credential-row">
                 <span class="credential-label">Username:</span>
                 <code class="credential-value">admin</code>
-                <span class="credential-alt">(hoặc admin@example.com)</span>
+              </div>
+              <div class="credential-row">
+                <span class="credential-label">Email:</span>
+                <code class="credential-value">admin@example.com</code>
               </div>
               <div class="credential-row">
                 <span class="credential-label">Password:</span>
-                <code class="credential-value">Password@123</code>
+                <code class="credential-value">Admin@123</code>
               </div>
             </div>
           </div>
