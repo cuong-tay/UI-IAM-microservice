@@ -2,8 +2,11 @@
    Shared Helpers — Format, escape, badges, icons & UI components
    ═══════════════════════════════════════════════════════════════ */
 
+import { fixUtf8 } from "../api-client.js";
+
 export function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (c) =>
+  const cleaned = typeof value === "string" ? fixUtf8(value) : value;
+  return String(cleaned ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c])
   );
 }

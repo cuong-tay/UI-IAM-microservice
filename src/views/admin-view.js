@@ -965,6 +965,21 @@ function readonlyList(editor, key, label) {
   `;
 }
 
+function permissionDetailView(item) {
+  if (!item) return `<div class="empty-state-card"><p>Không có thông tin chi tiết quyền.</p></div>`;
+  return `
+    <div class="drawer-info-grid">
+      <div class="info-row"><span class="info-label">ID Quyền:</span><strong>#${item.id}</strong></div>
+      <div class="info-row"><span class="info-label">Tên quyền:</span><strong>${escapeHtml(item.name || "—")}</strong></div>
+      <div class="info-row"><span class="info-label">Mã quyền (Code):</span><code>${escapeHtml(item.code || "")}</code></div>
+      <div class="info-row"><span class="info-label">Tài nguyên:</span><span class="resource-badge">${icons.folder} ${escapeHtml(item.resource || "—")}</span></div>
+      <div class="info-row"><span class="info-label">Hành động:</span><span class="action-badge">${icons.zap} ${escapeHtml(item.action || "—")}</span></div>
+      <div class="info-row"><span class="info-label">Hiệu lực (Effect):</span>${effectBadge(item.effect)}</div>
+      <div class="info-row"><span class="info-label">Mô tả:</span><span>${item.description ? escapeHtml(item.description) : '<span class="muted-italic">Chưa có mô tả</span>'}</span></div>
+    </div>
+  `;
+}
+
 function orgTreeView(editor) {
   const { treeData } = editor;
   if (!treeData) return `<div class="empty-state-card"><p>Không có dữ liệu cây tổ chức.</p></div>`;

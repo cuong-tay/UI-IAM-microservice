@@ -1009,12 +1009,69 @@ async function request(path, options = {}) {
     throw error;
   }
 
-  // Unwrap BaseResponseDto: { status, data } → return data
+  // Unwrap BaseResponseDto: { status, data } → return sanitizeUtf8(data)
   if (json && json.status && json.data !== undefined) {
-    return json.data;
+    return sanitizeUtf8(json.data);
   }
   // Fallback: return raw json if not wrapped
-  return json;
+  return sanitizeUtf8(json);
+}
+
+/* ── UTF-8 Mojibake Repair ────────────────────────────────── */
+
+const WIN1252_MAP = {
+  0x20AC: 0x80, 0x201A: 0x82, 0x0192: 0x83, 0x201E: 0x84, 0x2026: 0x85, 0x2020: 0x86, 0x2021: 0x87,
+  0x02C6: 0x88, 0x2030: 0x89, 0x0160: 0x8A, 0x2039: 0x8B, 0x0152: 0x8C, 0x017D: 0x8E, 0x2018: 0x91,
+  0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97, 0x02DC: 0x98,
+  0x2122: 0x99, 0x0161: 0x9A, 0x203A: 0x9B, 0x0153: 0x9C, 0x017E: 0x9E, 0x0178: 0x9F
+};
+
+const MOJIBAKE_REGEX = /[\u00C2-\u00C5\u00E1\u00E0\u00E2\u00E3\u00C6\u00C7\u00D0\u00D4\u00D5][\u0080-\u00BF\u2018-\u2026\u0160\u0152\u017D\u02C6\u02DC\u2030\u2039\u203A\u0153\u017E\u0178\u00BA\u00BB]|Ã|Ä|Å|Æ|áº|á»|â€|â•|â”/;
+
+function fixUtf8(str) {
+  if (typeof str !== "string" || !str) return str;
+  if (!MOJIBAKE_REGEX.test(str)) return str;
+
+  let current = str;
+  for (let pass = 0; pass < 2; pass++) {
+    try {
+      const bytes = [];
+      let canDecode = true;
+      for (let i = 0; i < current.length; i++) {
+        const code = current.charCodeAt(i);
+        if (code <= 0xFF) {
+          bytes.push(code);
+        } else if (WIN1252_MAP[code] !== undefined) {
+          bytes.push(WIN1252_MAP[code]);
+        } else {
+          canDecode = false;
+          break;
+        }
+      }
+      if (!canDecode || bytes.length === 0) break;
+      const decoded = new TextDecoder("utf-8", { fatal: true }).decode(new Uint8Array(bytes));
+      if (decoded === current) break;
+      current = decoded;
+      if (!MOJIBAKE_REGEX.test(current)) break;
+    } catch {
+      break;
+    }
+  }
+  return current;
+}
+
+function sanitizeUtf8(data) {
+  if (data === null || data === undefined) return data;
+  if (typeof data === "string") return fixUtf8(data);
+  if (Array.isArray(data)) return data.map(sanitizeUtf8);
+  if (typeof data === "object" && !(data instanceof Blob) && !(data instanceof FormData)) {
+    const out = {};
+    for (const [k, v] of Object.entries(data)) {
+      out[k] = sanitizeUtf8(v);
+    }
+    return out;
+  }
+  return data;
 }
 
 /* ── Helpers ───────────────────────────────────────────────── */
@@ -1032,7 +1089,7 @@ async function safeRequest(fn) {
 function extractPage(response) {
   if (response && Array.isArray(response.content)) {
     return {
-      items: response.content,
+      items: sanitizeUtf8(response.content),
       totalElements: response.totalElements || 0,
       totalPages: response.totalPages || 1,
       page: response.number || 0,
@@ -1040,7 +1097,7 @@ function extractPage(response) {
     };
   }
   // If response is already an array
-  const items = Array.isArray(response) ? response : [];
+  const items = Array.isArray(response) ? sanitizeUtf8(response) : [];
   return { items, totalElements: items.length, totalPages: 1, page: 0, size: items.length };
 }
 
@@ -1092,5 +1149,6 @@ function formatDate(value) {
 }
 
 function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
+  const cleaned = typeof value === "string" ? fixUtf8(value) : value;
+  return String(cleaned ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 }
