@@ -814,6 +814,7 @@ function permissionDetailView(item) {
       <div class="info-row"><span class="info-label">Tài nguyên:</span><span class="resource-badge">${escapeHtml(item.resource || "—")}</span></div>
       <div class="info-row"><span class="info-label">Hành động:</span><strong>${escapeHtml(item.action || "—")}</strong></div>
       <div class="info-row"><span class="info-label">Hiệu lực:</span>${effectBadge(item.effect)}</div>
+      <div class="info-row"><span class="info-label">Mô tả:</span><span>${item.description ? escapeHtml(item.description) : '<span class="muted-italic">Chưa có mô tả</span>'}</span></div>
       <div class="info-row"><span class="info-label">Cập nhật:</span><span>${formatDate(item.updatedAt)}</span></div>
     </div>
     <div class="drawer-actions-bar">
@@ -961,21 +962,6 @@ function readonlyList(editor, key, label) {
           <code>${escapeHtml(i.code || i.roleCode || i.groupCode || "")}</code>
         </div>
       `).join("")}
-    </div>
-  `;
-}
-
-function permissionDetailView(item) {
-  if (!item) return `<div class="empty-state-card"><p>Không có thông tin chi tiết quyền.</p></div>`;
-  return `
-    <div class="drawer-info-grid">
-      <div class="info-row"><span class="info-label">ID Quyền:</span><strong>#${item.id}</strong></div>
-      <div class="info-row"><span class="info-label">Tên quyền:</span><strong>${escapeHtml(item.name || "—")}</strong></div>
-      <div class="info-row"><span class="info-label">Mã quyền (Code):</span><code>${escapeHtml(item.code || "")}</code></div>
-      <div class="info-row"><span class="info-label">Tài nguyên:</span><span class="resource-badge">${icons.folder} ${escapeHtml(item.resource || "—")}</span></div>
-      <div class="info-row"><span class="info-label">Hành động:</span><span class="action-badge">${icons.zap} ${escapeHtml(item.action || "—")}</span></div>
-      <div class="info-row"><span class="info-label">Hiệu lực (Effect):</span>${effectBadge(item.effect)}</div>
-      <div class="info-row"><span class="info-label">Mô tả:</span><span>${item.description ? escapeHtml(item.description) : '<span class="muted-italic">Chưa có mô tả</span>'}</span></div>
     </div>
   `;
 }

@@ -615,6 +615,19 @@ export function extractPage(response) {
   return { items, totalElements: items.length, totalPages: 1, page: 0, size: items.length };
 }
 
+/**
+ * Thực thi an toàn một hàm API async, bỏ qua lỗi nếu không có quyền/lỗi mạng nhẹ.
+ */
+export async function safeLoad(fn) {
+  try {
+    return await fn();
+  } catch (error) {
+    if (error.status === 401) throw error;
+    console.warn("API warning:", error.message);
+    return null;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    HTTP LAYER — Request, Auth, Upload, Download
    ═══════════════════════════════════════════════════════════════ */
