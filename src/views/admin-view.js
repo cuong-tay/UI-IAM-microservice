@@ -678,7 +678,8 @@ function renderDrawer(state) {
     permissionDetail: "Chi Tiết Quyền Hạn API",
     permissionRoles:  "Các Vai Trò Có Quyền Này",
     orgTree:          "Sơ Đồ Cây Tổ Chức",
-    importResult:     "Kết Quả Nhập Dữ Liệu Excel"
+    importResult:     "Kết Quả Nhập Dữ Liệu Excel",
+    exportUsers:      "Xuất Danh Sách Người Dùng"
   };
 
   const kickerText = kind === "selfProfile" ? "TÀI KHOẢN CỦA TÔI" : "CỬA SỔ BIÊN TẬP";
@@ -722,8 +723,68 @@ function renderDrawerBody(state) {
     case "permissionRoles":  return readonlyList(state.editor, "roles", "Vai trò");
     case "orgTree":          return orgTreeView(state.editor);
     case "importResult":     return importResultView(state.editor);
+    case "exportUsers":      return exportUsersForm(state.data.organizations || []);
     default:                 return "";
   }
+}
+
+function exportUsersForm(organizations) {
+  const organizationOptions = organizations
+    .slice()
+    .sort((a, b) => (a.name || "").localeCompare(b.name || "", "vi"))
+    .map(org => `
+      <option value="${escapeHtml(org.id)}">
+        ${escapeHtml(org.name || `Tổ chức #${org.id}`)}${org.code ? ` (${escapeHtml(org.code)})` : ""}
+      </option>
+    `).join("");
+
+  return `
+    <div class="export-intro-card">
+      <span class="export-intro-icon">${icons.download}</span>
+      <div>
+        <strong>Chọn phạm vi dữ liệu cần xuất</strong>
+        <p>Không chọn bộ lọc nào để xuất toàn bộ người dùng. Bạn cũng có thể lọc theo tổ chức, trạng thái hoặc kết hợp cả hai.</p>
+      </div>
+    </div>
+
+    <form id="export-users-form">
+      <div class="form-grid">
+        <div class="input-group">
+          <label for="export-organization-id">Đơn vị / Tổ chức</label>
+          <select id="export-organization-id" name="organizationId">
+            <option value="">Tất cả tổ chức</option>
+            ${organizationOptions}
+          </select>
+          <span class="field-hint">Chỉ xuất người dùng thuộc tổ chức được chọn.</span>
+        </div>
+
+        <div class="input-group">
+          <label for="export-status">Trạng thái người dùng</label>
+          <select id="export-status" name="status">
+            <option value="">Tất cả trạng thái</option>
+            <option value="ACTIVE">ACTIVE — Đang hoạt động</option>
+            <option value="PENDING">PENDING — Chờ kích hoạt</option>
+            <option value="LOCKED">LOCKED — Đã khóa</option>
+            <option value="DISABLED">DISABLED — Đã vô hiệu hóa</option>
+          </select>
+          <span class="field-hint">File Excel chỉ chứa tài khoản có trạng thái tương ứng.</span>
+        </div>
+      </div>
+
+      <div class="export-scope-note">
+        ${icons.info}
+        <span>Các bộ lọc được kết hợp với nhau khi bạn chọn cả tổ chức và trạng thái.</span>
+      </div>
+
+      <div class="drawer-actions-bar">
+        <button class="btn-secondary" type="button" data-action="close-editor">Hủy bỏ</button>
+        <button class="btn-primary" type="submit">
+          <span class="btn-icon">${icons.download}</span>
+          <span>Xuất file Excel</span>
+        </button>
+      </div>
+    </form>
+  `;
 }
 
 /* ── User Forms ────────────────────────────────────────────── */

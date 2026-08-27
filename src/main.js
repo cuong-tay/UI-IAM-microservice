@@ -33,10 +33,32 @@ window.setInterval(() => { void synchronizeAccessContext(); }, 30_000);
 /* ── Bootstrap ─────────────────────────────────────────────── */
 
 async function bootstrap() {
+  const activationToken = new URLSearchParams(window.location.search).get("token");
+  if (activationToken) {
+    await activateAccountFromEmail(activationToken);
+    return;
+  }
+
   if (!state.session?.accessToken) return;
   // Nạp access context (permission + user profile) trước khi load data
   await api.loadAccessContext();
   await loadAdminData();
+}
+
+async function activateAccountFromEmail(token) {
+  try {
+    await api.activateAccount(token);
+    window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.hash}`);
+    setStatus("success", "Tài khoản đã được kích hoạt. Trạng thái: Hoạt động. Bạn có thể đăng nhập.");
+    render();
+
+    // Refresh immediately when an administrator is already signed in.
+    if (state.session?.accessToken) await loadAdminData();
+  } catch (error) {
+    window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.hash}`);
+    setStatus("error", error.message || "Liên kết kích hoạt không hợp lệ hoặc đã hết hạn.");
+    render();
+  }
 }
 
 /* ── Input Handler (Live Search) ───────────────────────────── */
@@ -125,7 +147,11 @@ async function handleClick(event) {
     if (action === "org-tree") return openOrgTree(id);
 
     // Import/Export
-    if (action === "export-users") { if (!can("users:export")) return; return exportUsersAction(); }
+    if (action === "export-users") {
+      if (!can("users:export")) return;
+      state.editor = { kind: "exportUsers", item: {} };
+      return render();
+    }
     if (action === "import-users") { if (!can("users:import")) return; return triggerImportDialog(); }
 
     // Pagination
@@ -155,6 +181,7 @@ async function handleSubmit(event) {
     if (form.id === "role-permissions-form")       return await saveRolePermissions(form);
     if (form.id === "group-users-form")           return await saveGroupUsers(form);
     if (form.id === "group-roles-form")           return await saveGroupRoles(form);
+    if (form.id === "export-users-form")           return await exportUsersAction(form);
   } catch (error) {
     handleError(error);
   } finally {
@@ -651,11 +678,15 @@ async function togglePermEffect(id) {
 
 /* ── Import / Export ───────────────────────────────────────── */
 
-async function exportUsersAction() {
+async function exportUsersAction(form) {
   try {
+    const filters = readForm(form);
+    const organizationId = filters.organizationId ? Number(filters.organizationId) : null;
+    const status = filters.status || null;
+    state.editor = null;
     setStatus("success", "Đang tạo file Excel...");
     render();
-    const { blob, filename } = await api.exportUsers();
+    const { blob, filename } = await api.exportUsers(organizationId, status);
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
